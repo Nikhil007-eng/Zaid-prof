@@ -3,850 +3,633 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>XOS — Admin Panel</title>
+    <title>XOS — Posts</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Space+Grotesk:wght@300;400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
-        :root { --accent:#007aff; --red:#ff3131; --glass:rgba(10,10,10,0.85); --border:#1a1a1a; }
+        :root { --accent:#007aff; --red:#ff3131; --border:#1a1a1a; }
         * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none; }
-        html,body { height:100%; width:100%; overflow:hidden; position:fixed; background:#000; color:#fff; font-family:'Space Grotesk',sans-serif; }
-        .font-brand { font-family:'Space Grotesk',sans-serif; letter-spacing:2px; text-transform:uppercase; }
-        .glass { background:var(--glass); backdrop-filter:blur(25px) saturate(180%); -webkit-backdrop-filter:blur(25px) saturate(180%); border:1px solid var(--border); }
+        html,body { height:100%;width:100%;overflow:hidden;position:fixed;background:#000;color:#fff;font-family:'Space Grotesk',sans-serif; }
+        .brand { font-family:'Space Grotesk',sans-serif;letter-spacing:2px;text-transform:uppercase; }
+        .glass { background:rgba(10,10,10,0.85);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid var(--border); }
 
-        /* ── SCREENS ── */
-        .screen { position:fixed; inset:0; display:flex; flex-direction:column; transition:transform 0.4s cubic-bezier(.77,0,.18,1), opacity 0.3s; overflow:hidden; }
-        .screen.hidden-right { transform:translateX(100%); opacity:0; pointer-events:none; }
-        .screen.hidden-left  { transform:translateX(-100%); opacity:0; pointer-events:none; }
+        /* SCREENS */
+        .screen { position:fixed;inset:0;display:flex;flex-direction:column;background:#000;transition:transform 0.4s cubic-bezier(.77,0,.18,1);overflow:hidden; }
+        .screen.off { transform:translateX(100%);pointer-events:none; }
 
-        /* ── AUTH OVERLAY ── */
-        #auth-screen { background:rgba(0,0,0,0.95); backdrop-filter:blur(30px); z-index:200; align-items:center; justify-content:center; }
-        .auth-box { width:85vw; max-width:320px; text-align:center; }
-        .auth-icon { width:64px;height:64px;background:rgba(0,122,255,0.1);border:1px solid rgba(0,122,255,0.3);border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 24px; }
+        /* SCROLL */
+        .scroll { flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:80px; }
+        .scroll::-webkit-scrollbar { width:0; }
 
-        /* ── SCROLLABLE CONTENT ── */
-        .scroll-area { flex:1; overflow-y:auto; touch-action:pan-y; padding-bottom:100px; }
-        .scroll-area::-webkit-scrollbar { width:0; }
+        /* INPUTS */
+        .inp { background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:14px 16px;color:#fff;font-size:13px;width:100%;outline:none;font-family:'Space Grotesk';transition:border-color 0.2s; }
+        .inp:focus { border-color:var(--accent); }
+        .inp::placeholder { color:rgba(255,255,255,0.2); }
 
-        /* ── POST GRID ── */
-        .post-card { position:relative; aspect-ratio:1; border-radius:18px; overflow:hidden; cursor:pointer; }
-        .post-card img, .post-card video { width:100%;height:100%;object-fit:cover;opacity:0.85; }
-        .post-card .overlay { position:absolute;inset:0;background:linear-gradient(transparent 50%,rgba(0,0,0,0.7));opacity:0;transition:opacity 0.2s; }
-        .post-card:active .overlay { opacity:1; }
-        .delete-btn { position:absolute;top:8px;right:8px;width:30px;height:30px;background:rgba(255,49,49,0.9);border-radius:50%;border:none;color:white;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10;transition:transform 0.15s; }
-        .delete-btn:active { transform:scale(0.9); }
-        .post-card .audio-badge { position:absolute;bottom:8px;left:8px;background:rgba(0,122,255,0.8);border-radius:8px;padding:3px 7px;font-size:8px;font-family:'Space Grotesk';letter-spacing:1px;text-transform:uppercase; }
+        /* BUTTONS */
+        .btn-primary { width:100%;background:rgba(0,122,255,0.12);border:1px solid var(--accent);border-radius:14px;padding:15px;font-size:10px;font-family:'Space Grotesk';letter-spacing:2px;text-transform:uppercase;color:var(--accent);cursor:pointer; }
+        .btn-primary:active { background:rgba(0,122,255,0.25); }
+        .btn-primary:disabled { opacity:0.4; }
+        .btn-icon { width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;flex-shrink:0; }
+        .btn-icon:active { background:rgba(255,255,255,0.15); }
 
-        /* ── XOS INPUT ── */
-        .xos-input { background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:14px 16px;color:white;font-size:13px;width:100%;outline:none;font-family:'Space Grotesk';transition:border-color 0.2s; }
-        .xos-input:focus { border-color:var(--accent); }
-        .xos-input::placeholder { color:rgba(255,255,255,0.2); }
-        textarea.xos-input { resize:none; }
+        /* UPLOAD ZONE */
+        .drop-zone { border:2px dashed rgba(0,122,255,0.25);border-radius:18px;padding:28px 16px;text-align:center;position:relative;transition:all 0.25s; }
+        .drop-zone.over { border-color:var(--accent);background:rgba(0,122,255,0.06); }
+        .drop-zone input[type=file] { position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer; }
 
-        /* ── UPLOAD ZONE ── */
-        .upload-zone { border:2px dashed rgba(0,122,255,0.25);border-radius:20px;padding:28px 16px;text-align:center;cursor:pointer;transition:all 0.3s;background:rgba(0,122,255,0.02);position:relative; }
-        .upload-zone.drag-over { border-color:var(--accent);background:rgba(0,122,255,0.07); }
-        .upload-zone input[type=file] { position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%; }
-        .preview-media { width:100%;height:160px;object-fit:cover;border-radius:14px;border:1px solid rgba(255,255,255,0.06); }
+        /* TABS */
+        .tab { flex:1;padding:10px;font-size:9px;font-family:'Space Grotesk';letter-spacing:1.5px;text-transform:uppercase;border-radius:10px;background:transparent;border:1px solid transparent;color:rgba(255,255,255,0.25);cursor:pointer;transition:all 0.2s; }
+        .tab.on { background:rgba(0,122,255,0.12);border-color:var(--accent);color:var(--accent); }
 
-        /* ── TAB BUTTONS ── */
-        .tab-btn { flex:1;padding:10px 6px;font-size:9px;font-family:'Space Grotesk';letter-spacing:1.5px;text-transform:uppercase;border-radius:10px;background:transparent;border:1px solid transparent;color:rgba(255,255,255,0.25);cursor:pointer;transition:all 0.2s; }
-        .tab-btn.active { background:rgba(0,122,255,0.12);border-color:var(--accent);color:var(--accent); }
+        /* POST CARDS */
+        .post-card { position:relative;aspect-ratio:1;border-radius:16px;overflow:hidden;cursor:pointer;border:1px solid var(--border); }
+        .post-card img,.post-card video { width:100%;height:100%;object-fit:cover;opacity:0.85; }
+        .del-btn { position:absolute;top:7px;right:7px;width:28px;height:28px;background:rgba(255,49,49,0.9);border-radius:50%;border:none;color:#fff;font-size:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:5; }
+        .audio-tag { position:absolute;bottom:7px;left:7px;background:rgba(0,122,255,0.85);border-radius:6px;padding:2px 7px;font-size:8px;text-transform:uppercase;letter-spacing:1px; }
 
-        /* ── PROGRESS BAR ── */
-        .prog-wrap { height:3px;background:rgba(255,255,255,0.06);border-radius:10px;overflow:hidden; }
-        .prog-bar { height:100%;background:var(--accent);width:0%;transition:width 0.25s;border-radius:10px; }
+        /* TRIMMER */
+        #waveform-box { position:relative;height:80px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:14px;overflow:hidden;touch-action:none;cursor:col-resize; }
+        #wv-canvas { position:absolute;inset:0;width:100%;height:100%; }
+        #wv-left  { position:absolute;top:0;bottom:0;left:0;background:rgba(0,0,0,0.6);pointer-events:none;z-index:2; }
+        #wv-right { position:absolute;top:0;bottom:0;right:0;background:rgba(0,0,0,0.6);pointer-events:none;z-index:2; }
+        #wv-sel   { position:absolute;top:0;bottom:0;border-top:2px solid var(--accent);border-bottom:2px solid var(--accent);pointer-events:none;z-index:3; }
+        #wv-sh    { position:absolute;top:0;bottom:0;left:0;width:20px;background:var(--accent);z-index:5;touch-action:none;display:flex;align-items:center;justify-content:center;border-radius:5px 0 0 5px; }
+        #wv-eh    { position:absolute;top:0;bottom:0;right:0;width:20px;background:var(--accent);z-index:5;touch-action:none;display:flex;align-items:center;justify-content:center;border-radius:0 5px 5px 0; }
+        #wv-sh::after,#wv-eh::after { content:'';width:3px;height:26px;background:rgba(255,255,255,0.8);border-radius:2px; }
+        #wv-head  { position:absolute;top:0;bottom:0;width:2px;background:#fff;pointer-events:none;z-index:6; }
 
-        /* ── AUDIO TRIMMER ── */
-        #trimmer-section { margin-top:18px; }
-        #waveform-outer { position:relative; touch-action:none; user-select:none; -webkit-user-select:none; }
-        #waveform-wrap { position:relative;height:80px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:14px;overflow:hidden;touch-action:none; }
-        #waveform-canvas { width:100%;height:100%;display:block; }
-        /* dark overlay outside selection */
-        #trim-left-dark  { position:absolute;top:0;bottom:0;left:0;background:rgba(0,0,0,0.55);pointer-events:none;z-index:2; }
-        #trim-right-dark { position:absolute;top:0;bottom:0;right:0;background:rgba(0,0,0,0.55);pointer-events:none;z-index:2; }
-        /* selection box */
-        #trim-selection { position:absolute;top:0;bottom:0;border-top:2px solid var(--accent);border-bottom:2px solid var(--accent);pointer-events:none;z-index:3; }
-        /* edge handles — tall thick bars like a real trimmer */
-        #trim-start-handle { position:absolute;top:0;bottom:0;left:0;width:22px;background:var(--accent);z-index:5;touch-action:none;cursor:col-resize;display:flex;align-items:center;justify-content:center;border-radius:6px 0 0 6px; }
-        #trim-end-handle   { position:absolute;top:0;bottom:0;right:0;width:22px;background:var(--accent);z-index:5;touch-action:none;cursor:col-resize;display:flex;align-items:center;justify-content:center;border-radius:0 6px 6px 0; }
-        #trim-start-handle::after, #trim-end-handle::after { content:''; width:3px;height:28px;background:rgba(255,255,255,0.7);border-radius:2px; }
-        /* playhead */
-        #playhead { position:absolute;top:0;bottom:0;width:2px;background:white;pointer-events:none;z-index:6;left:0; }
-        .trim-time { font-size:10px;color:rgba(255,255,255,0.5);font-family:monospace;letter-spacing:1px; }
+        /* PROGRESS */
+        .prog { height:3px;background:rgba(255,255,255,0.06);border-radius:10px;overflow:hidden; }
+        .prog-fill { height:100%;background:var(--accent);width:0%;transition:width 0.2s;border-radius:10px; }
 
-        .audio-ctrl-btn { width:40px;height:40px;border-radius:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:white;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;font-size:13px; }
-        .audio-ctrl-btn:active { background:var(--accent);border-color:var(--accent); }
-        .audio-ctrl-btn.active { background:rgba(0,122,255,0.2);border-color:var(--accent);color:var(--accent); }
-
-        /* ── PUB BUTTON ── */
-        .pub-btn { width:100%;background:rgba(0,122,255,0.12);border:1px solid var(--accent);border-radius:14px;padding:15px;font-size:10px;font-family:'Space Grotesk';letter-spacing:2px;text-transform:uppercase;color:var(--accent);cursor:pointer;transition:all 0.2s; }
-        .pub-btn:active { background:rgba(0,122,255,0.25); }
-        .pub-btn:disabled { opacity:0.4;cursor:not-allowed; }
-
-        /* ── SPINNER ── */
-        .spinner { width:24px;height:24px;border:2px solid rgba(255,255,255,0.1);border-top:2px solid var(--accent);border-radius:50%;animation:spin 0.7s linear infinite; }
-        @keyframes spin { to { transform:rotate(360deg); } }
-
-        /* ── CLOSE BTN ── */
-        .close-circle { width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);color:white;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px; }
-
-        /* ── EMPTY STATE ── */
-        .empty-state { text-align:center;padding:60px 20px;color:rgba(255,255,255,0.12);font-size:10px;text-transform:uppercase;letter-spacing:2px;font-family:'Space Grotesk'; }
+        /* SPINNER */
+        .spin { width:22px;height:22px;border:2px solid rgba(255,255,255,0.1);border-top-color:var(--accent);border-radius:50%;animation:rot 0.7s linear infinite;margin:0 auto; }
+        @keyframes rot { to { transform:rotate(360deg); } }
     </style>
 </head>
 <body>
 
-<!-- ════════════════════════════════════════════
-     SCREEN 1 — AUTH
-════════════════════════════════════════════ -->
-<div class="screen" id="auth-screen">
-    <div class="auth-box">
-        <div class="auth-icon"><i class="fas fa-lock" style="color:var(--accent);font-size:22px;"></i></div>
-        <p class="font-brand" style="font-size:10px;color:var(--accent);letter-spacing:0.35em;margin-bottom:6px;">SECURE UPLINK</p>
-        <p style="font-size:9px;color:rgba(255,255,255,0.25);margin-bottom:28px;text-transform:uppercase;letter-spacing:1px;">Admin access required</p>
-        <input type="password" id="auth-key" class="xos-input" style="text-align:center;letter-spacing:10px;font-size:22px;" placeholder="••••" onkeydown="if(event.key==='Enter')doAuth()">
-        <p id="auth-err" style="font-size:9px;color:var(--red);margin-top:10px;display:none;letter-spacing:1px;text-transform:uppercase;">ACCESS DENIED</p>
-        <button onclick="doAuth()" class="pub-btn" style="margin-top:20px;">Verify Access</button>
-        <button onclick="history.back()" style="margin-top:14px;width:100%;background:transparent;border:none;color:rgba(255,255,255,0.2);font-size:9px;font-family:'Space Grotesk';letter-spacing:2px;text-transform:uppercase;cursor:pointer;">← BACK TO PROFILE</button>
+<!-- ═══════════════════════ AUTH ═══════════════════════ -->
+<div class="screen" id="s-auth" style="align-items:center;justify-content:center;">
+    <div style="width:85vw;max-width:300px;text-align:center;">
+        <div style="width:60px;height:60px;background:rgba(0,122,255,0.1);border:1px solid rgba(0,122,255,0.3);border-radius:18px;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;">
+            <i class="fas fa-lock" style="color:var(--accent);font-size:20px;"></i>
+        </div>
+        <p class="brand" style="font-size:10px;color:var(--accent);letter-spacing:0.35em;margin-bottom:6px;">SECURE UPLINK</p>
+        <p style="font-size:9px;color:rgba(255,255,255,0.25);margin-bottom:24px;text-transform:uppercase;letter-spacing:1px;">Enter password to continue</p>
+        <input type="password" id="pwd" class="inp" style="text-align:center;letter-spacing:8px;font-size:20px;" placeholder="••••">
+        <p id="pwd-err" style="font-size:9px;color:var(--red);margin-top:10px;display:none;letter-spacing:1px;text-transform:uppercase;">Wrong password</p>
+        <button id="auth-btn" class="btn-primary" style="margin-top:18px;" onclick="doAuth()">
+            <i class="fas fa-arrow-right" style="margin-right:6px;"></i>ENTER
+        </button>
+        <a href="index.html" style="display:block;margin-top:14px;font-size:9px;color:rgba(255,255,255,0.2);text-transform:uppercase;letter-spacing:2px;text-decoration:none;">← Back</a>
     </div>
 </div>
 
-<!-- ════════════════════════════════════════════
-     SCREEN 2 — MY POSTS
-════════════════════════════════════════════ -->
-<div class="screen hidden-right" id="posts-screen">
-    <!-- Header -->
-    <div style="padding:20px 20px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);">
-        <button onclick="history.back()" class="close-circle"><i class="fas fa-chevron-left"></i></button>
-        <span class="font-brand" style="font-size:9px;color:rgba(255,255,255,0.4);letter-spacing:0.4em;">MY POSTS</span>
-        <button onclick="showUpload()" style="width:34px;height:34px;border-radius:10px;background:rgba(0,122,255,0.15);border:1px solid var(--accent);color:var(--accent);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;"><i class="fas fa-plus"></i></button>
+<!-- ═══════════════════════ POSTS ═══════════════════════ -->
+<div class="screen off" id="s-posts">
+    <div style="padding:20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);">
+        <a href="index.html" class="btn-icon"><i class="fas fa-chevron-left"></i></a>
+        <span class="brand" style="font-size:9px;color:rgba(255,255,255,0.35);letter-spacing:0.4em;">MY POSTS</span>
+        <button class="btn-icon" style="background:rgba(0,122,255,0.12);border-color:rgba(0,122,255,0.4);color:var(--accent);" onclick="goUpload()"><i class="fas fa-plus"></i></button>
     </div>
-
-    <!-- Stats bar -->
-    <div style="display:flex;padding:14px 20px;gap:12px;border-bottom:1px solid var(--border);">
-        <div style="flex:1;text-align:center;">
-            <p id="stat-count" style="font-size:20px;font-weight:700;color:white;">0</p>
-            <p class="font-brand" style="font-size:7px;color:rgba(255,255,255,0.3);margin-top:2px;">Posts</p>
-        </div>
-        <div style="width:1px;background:var(--border);"></div>
-        <div style="flex:1;text-align:center;">
-            <p style="font-size:20px;font-weight:700;color:var(--accent);">ZAID</p>
-            <p class="font-brand" style="font-size:7px;color:rgba(255,255,255,0.3);margin-top:2px;">zaid@xos</p>
-        </div>
-        <div style="width:1px;background:var(--border);"></div>
-        <div style="flex:1;text-align:center;">
-            <div style="width:10px;height:10px;background:#22c55e;border-radius:50%;margin:0 auto 4px;box-shadow:0 0 8px #22c55e;"></div>
-            <p class="font-brand" style="font-size:7px;color:rgba(255,255,255,0.3);">Online</p>
-        </div>
-    </div>
-
-    <!-- Grid -->
-    <div class="scroll-area" style="padding:16px;">
-        <div id="admin-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-            <div class="empty-state" style="grid-column:span 2;" id="empty-msg">Loading posts...</div>
-        </div>
+    <div class="scroll" style="padding:16px;">
+        <div id="grid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"></div>
     </div>
 </div>
 
-<!-- ════════════════════════════════════════════
-     SCREEN 3 — UPLOAD
-════════════════════════════════════════════ -->
-<div class="screen hidden-right" id="upload-screen">
-    <!-- Header -->
-    <div style="padding:20px 20px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);">
-        <button onclick="showPosts()" class="close-circle"><i class="fas fa-chevron-left"></i></button>
-        <span class="font-brand" style="font-size:9px;color:rgba(255,255,255,0.4);letter-spacing:0.4em;">NEW POST</span>
-        <div style="width:34px;"></div>
+<!-- ═══════════════════════ UPLOAD ═══════════════════════ -->
+<div class="screen off" id="s-upload">
+    <div style="padding:20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);">
+        <button class="btn-icon" onclick="goPosts()"><i class="fas fa-chevron-left"></i></button>
+        <span class="brand" style="font-size:9px;color:rgba(255,255,255,0.35);letter-spacing:0.4em;">NEW POST</span>
+        <div style="width:36px;"></div>
     </div>
+    <div class="scroll" style="padding:20px;">
 
-    <div class="scroll-area" style="padding:20px;">
-
-        <!-- Media type tabs -->
-        <div style="display:flex;gap:8px;margin-bottom:18px;">
-            <button class="tab-btn active" id="tab-image" onclick="setTab('image')"><i class="fas fa-image" style="margin-right:5px;"></i>Image</button>
-            <button class="tab-btn" id="tab-video" onclick="setTab('video')"><i class="fas fa-video" style="margin-right:5px;"></i>Video</button>
+        <!-- Media tabs -->
+        <div style="display:flex;gap:8px;margin-bottom:16px;">
+            <button class="tab on" id="t-img" onclick="setTab('image')"><i class="fas fa-image" style="margin-right:4px;"></i>Image</button>
+            <button class="tab" id="t-vid" onclick="setTab('video')"><i class="fas fa-video" style="margin-right:4px;"></i>Video</button>
         </div>
 
-        <!-- Media upload zone -->
-        <div class="upload-zone" id="media-zone"
-            ondragover="event.preventDefault();this.classList.add('drag-over')"
-            ondragleave="this.classList.remove('drag-over')"
-            ondrop="handleMediaDrop(event)">
-            <input type="file" id="media-input" accept="image/*" onchange="onMediaSelect(event)">
-            <div id="media-placeholder">
-                <i class="fas fa-photo-film" style="font-size:30px;color:rgba(0,122,255,0.4);display:block;margin-bottom:12px;"></i>
-                <p class="font-brand" style="font-size:9px;color:rgba(255,255,255,0.25);letter-spacing:2px;">TAP TO SELECT</p>
-                <p style="font-size:8px;color:rgba(255,255,255,0.12);margin-top:5px;">image or video</p>
+        <!-- Media drop zone -->
+        <div class="drop-zone" id="media-drop" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="onMediaDrop(event)">
+            <input type="file" id="media-file" accept="image/*" onchange="onMediaPick(event)">
+            <div id="media-ph">
+                <i class="fas fa-photo-film" style="font-size:28px;color:rgba(0,122,255,0.4);display:block;margin-bottom:10px;"></i>
+                <p class="brand" style="font-size:9px;color:rgba(255,255,255,0.2);letter-spacing:2px;">TAP TO SELECT</p>
             </div>
-            <div id="media-preview" style="display:none;">
-                <img id="prev-img" class="preview-media" style="display:none;">
-                <video id="prev-vid" class="preview-media" style="display:none;" muted playsinline></video>
-                <p id="prev-name" style="font-size:9px;color:rgba(255,255,255,0.35);margin-top:8px;word-break:break-all;"></p>
+            <div id="media-pv" style="display:none;">
+                <img id="pv-img" style="width:100%;height:150px;object-fit:cover;border-radius:12px;display:none;">
+                <video id="pv-vid" style="width:100%;height:150px;object-fit:cover;border-radius:12px;display:none;" muted playsinline></video>
+                <p id="pv-name" style="font-size:9px;color:rgba(255,255,255,0.3);margin-top:6px;word-break:break-all;"></p>
             </div>
         </div>
-
-        <!-- Media progress -->
-        <div id="media-prog-wrap" class="prog-wrap" style="margin-top:8px;display:none;"><div id="media-prog-bar" class="prog-bar"></div></div>
+        <div id="media-prog" class="prog" style="margin-top:6px;display:none;"><div id="media-prog-fill" class="prog-fill"></div></div>
 
         <!-- Caption -->
-        <div style="margin-top:18px;">
-            <p class="font-brand" style="font-size:8px;color:rgba(255,255,255,0.25);letter-spacing:2px;margin-bottom:8px;">Caption</p>
-            <textarea id="caption-input" class="xos-input" rows="2" placeholder="Write a caption..."></textarea>
+        <div style="margin-top:16px;">
+            <p class="brand" style="font-size:8px;color:rgba(255,255,255,0.25);letter-spacing:2px;margin-bottom:8px;">Caption</p>
+            <textarea id="caption" class="inp" rows="2" style="resize:none;" placeholder="Write a caption..."></textarea>
         </div>
 
-        <!-- Audio upload -->
-        <div style="margin-top:18px;">
-            <p class="font-brand" style="font-size:8px;color:rgba(255,255,255,0.25);letter-spacing:2px;margin-bottom:8px;">Background Audio <span style="color:rgba(255,255,255,0.12);font-size:7px;">(Optional)</span></p>
-            <div class="upload-zone" id="audio-zone" style="padding:18px 16px;"
-                ondragover="event.preventDefault();this.classList.add('drag-over')"
-                ondragleave="this.classList.remove('drag-over')"
-                ondrop="handleAudioDrop(event)">
-                <input type="file" id="audio-input" accept="audio/*" onchange="onAudioSelect(event)">
-                <div id="audio-placeholder">
-                    <i class="fas fa-music" style="font-size:22px;color:rgba(0,122,255,0.35);display:block;margin-bottom:8px;"></i>
-                    <p class="font-brand" style="font-size:9px;color:rgba(255,255,255,0.2);letter-spacing:2px;">TAP TO SELECT AUDIO</p>
-                    <p style="font-size:8px;color:rgba(255,255,255,0.1);margin-top:4px;">mp3, aac, wav, m4a</p>
+        <!-- Audio drop zone -->
+        <div style="margin-top:16px;">
+            <p class="brand" style="font-size:8px;color:rgba(255,255,255,0.25);letter-spacing:2px;margin-bottom:8px;">Background Audio <span style="color:rgba(255,255,255,0.12);font-size:7px;">(Optional)</span></p>
+            <div class="drop-zone" id="audio-drop" style="padding:16px;" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="onAudioDrop(event)">
+                <input type="file" id="audio-file" accept="audio/*" onchange="onAudioPick(event)">
+                <div id="audio-ph">
+                    <i class="fas fa-music" style="font-size:22px;color:rgba(0,122,255,0.3);display:block;margin-bottom:8px;"></i>
+                    <p class="brand" style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:2px;">TAP TO SELECT AUDIO</p>
+                    <p style="font-size:8px;color:rgba(255,255,255,0.1);margin-top:4px;">mp3 · aac · wav · m4a</p>
                 </div>
-                <div id="audio-selected-info" style="display:none;text-align:left;">
+                <div id="audio-info" style="display:none;">
                     <div style="display:flex;align-items:center;gap:10px;">
-                        <div style="width:36px;height:36px;background:rgba(0,122,255,0.15);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fas fa-music" style="color:var(--accent);font-size:13px;"></i></div>
+                        <div style="width:34px;height:34px;background:rgba(0,122,255,0.12);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fas fa-music" style="color:var(--accent);"></i></div>
                         <div style="flex:1;overflow:hidden;">
-                            <p id="audio-filename" style="font-size:11px;color:white;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></p>
-                            <p id="audio-duration" style="font-size:9px;color:rgba(255,255,255,0.35);margin-top:2px;"></p>
+                            <p id="audio-name" style="font-size:11px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></p>
+                            <p id="audio-dur" style="font-size:9px;color:rgba(255,255,255,0.3);margin-top:2px;"></p>
                         </div>
-                        <button onclick="clearAudio()" style="background:rgba(255,49,49,0.15);border:1px solid rgba(255,49,49,0.3);border-radius:8px;padding:5px 10px;color:#ff6b6b;font-size:9px;font-family:'Space Grotesk';letter-spacing:1px;cursor:pointer;">CLEAR</button>
+                        <button onclick="clearAudio()" style="background:rgba(255,49,49,0.12);border:1px solid rgba(255,49,49,0.3);border-radius:8px;padding:5px 10px;color:#ff6b6b;font-size:9px;font-family:'Space Grotesk';letter-spacing:1px;cursor:pointer;white-space:nowrap;">CLEAR</button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Audio trimmer (shown after audio selected) -->
-        <div id="trimmer-section" style="display:none;margin-top:18px;">
-            <p class="font-brand" style="font-size:8px;color:rgba(255,255,255,0.25);letter-spacing:2px;margin-bottom:12px;">TRIM AUDIO</p>
-
-            <!-- Waveform + handles all inside one touch container -->
-            <div id="waveform-outer">
-                <div id="waveform-wrap">
-                    <canvas id="waveform-canvas"></canvas>
-                    <div id="trim-left-dark"></div>
-                    <div id="trim-right-dark"></div>
-                    <div id="trim-selection">
-                        <div id="trim-start-handle"></div>
-                        <div id="trim-end-handle"></div>
-                    </div>
-                    <div id="playhead"></div>
+        <!-- Trimmer -->
+        <div id="trimmer" style="display:none;margin-top:16px;">
+            <p class="brand" style="font-size:8px;color:rgba(255,255,255,0.25);letter-spacing:2px;margin-bottom:10px;">TRIM AUDIO</p>
+            <div id="waveform-box">
+                <canvas id="wv-canvas"></canvas>
+                <div id="wv-left"></div>
+                <div id="wv-right"></div>
+                <div id="wv-sel">
+                    <div id="wv-sh"></div>
+                    <div id="wv-eh"></div>
                 </div>
+                <div id="wv-head"></div>
             </div>
-
-            <!-- Time labels -->
-            <div style="display:flex;justify-content:space-between;margin-top:10px;padding:0 2px;">
-                <span class="trim-time" id="trim-start-label">0:00</span>
-                <span class="trim-time" id="trim-duration-label" style="color:var(--accent);">0:00</span>
-                <span class="trim-time" id="trim-end-label">0:00</span>
+            <div style="display:flex;justify-content:space-between;margin-top:8px;padding:0 2px;">
+                <span id="lbl-start" style="font-size:10px;color:rgba(255,255,255,0.4);font-family:monospace;">0:00</span>
+                <span id="lbl-dur"   style="font-size:10px;color:var(--accent);font-family:monospace;">0:00</span>
+                <span id="lbl-end"   style="font-size:10px;color:rgba(255,255,255,0.4);font-family:monospace;">0:00</span>
             </div>
-
-            <!-- Controls -->
-            <div style="display:flex;gap:10px;margin-top:14px;align-items:center;">
-                <button class="audio-ctrl-btn" id="play-trim-btn" onclick="toggleTrimPlay()">
-                    <i class="fas fa-play" id="play-trim-icon"></i>
+            <div style="display:flex;gap:10px;margin-top:12px;align-items:center;">
+                <button id="play-btn" onclick="togglePlay()" style="width:42px;height:42px;border-radius:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;flex-shrink:0;">
+                    <i class="fas fa-play" id="play-icon"></i>
                 </button>
-                <button class="audio-ctrl-btn" onclick="previewTrim()">
+                <button onclick="previewTrim()" style="width:42px;height:42px;border-radius:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;flex-shrink:0;">
                     <i class="fas fa-scissors"></i>
                 </button>
-                <div style="flex:1;background:rgba(255,255,255,0.03);border-radius:10px;padding:8px 12px;border:1px solid rgba(255,255,255,0.06);">
-                    <p style="font-size:8px;color:rgba(255,255,255,0.2);font-family:'Space Grotesk';text-transform:uppercase;letter-spacing:1px;line-height:1.5;">Drag <b style="color:rgba(0,122,255,0.7);">edges</b> to trim · Drag <b style="color:rgba(255,255,255,0.4);">middle</b> to move</p>
-                </div>
+                <p style="font-size:8px;color:rgba(255,255,255,0.18);font-family:'Space Grotesk';text-transform:uppercase;letter-spacing:1px;line-height:1.5;">Drag <b style="color:rgba(0,122,255,0.6);">edges</b> to trim · <b style="color:rgba(255,255,255,0.35);">middle</b> to move</p>
             </div>
-
-            <!-- Audio upload progress -->
-            <div id="audio-prog-wrap" class="prog-wrap" style="margin-top:10px;display:none;"><div id="audio-prog-bar" class="prog-bar"></div></div>
+            <div id="audio-prog" class="prog" style="margin-top:8px;display:none;"><div id="audio-prog-fill" class="prog-fill"></div></div>
         </div>
 
         <!-- Publish -->
-        <button class="pub-btn" id="pub-btn" onclick="doPublish()" style="margin-top:24px;">
+        <button id="pub-btn" class="btn-primary" style="margin-top:24px;" onclick="doPublish()">
             <i class="fas fa-upload" style="margin-right:6px;"></i>PUBLISH POST
         </button>
-        <p id="pub-status" style="font-size:9px;text-align:center;margin-top:10px;min-height:14px;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.35);"></p>
-        <div style="height:40px;"></div>
+        <p id="status" style="font-size:9px;text-align:center;margin-top:10px;min-height:14px;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.3);"></p>
+        <div style="height:60px;"></div>
     </div>
 </div>
 
-<!-- Hidden audio element for trimmer -->
 <audio id="trim-audio" style="display:none;"></audio>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
-
 <script>
-// ── FIREBASE ─────────────────────────────────────────────────────────────────
+
+// ── CONFIG ────────────────────────────────────────────────────────────────────
+const CLOUD  = "dptphdatf";
+const PRESET = "vagprxhr";
+const _P     = [122,97,105,100,64,52,51,50]; // zaid@432 as char codes
+
+// ── FIREBASE ──────────────────────────────────────────────────────────────────
 let db = null;
 try {
     firebase.initializeApp({
         apiKey:"AIzaSyAUk6bBCFPoq-Tu-AiX1nD3LFvhc6g7B7g",
         authDomain:"steel-melody-464711-d6.firebaseapp.com",
+        databaseURL:"https://steel-melody-464711-d6-default-rtdb.firebaseio.com",
         projectId:"steel-melody-464711-d6",
         storageBucket:"steel-melody-464711-d6.firebasestorage.app",
         messagingSenderId:"288849938458",
-        appId:"1:288849938458:web:d615242bb9f1e1ee0fe9a3",
-        databaseURL:"https://steel-melody-464711-d6-default-rtdb.firebaseio.com"
+        appId:"1:288849938458:web:d615242bb9f1e1ee0fe9a3"
     });
     db = firebase.database();
-} catch(e) { console.warn('Firebase init failed:', e); }
+} catch(e) {}
 
-const CLOUDINARY_CLOUD = "dptphdatf";
-const CLOUDINARY_PRESET = "vagprxhr";
-// Password stored as char codes — not plain text
-const _P = [122,97,105,100,64,52,51,50];
-
-let posts = [];
-let selectedMediaFile = null;
-let selectedAudioFile = null;
-let audioBuffer = null;
-let trimStart = 0;
-let trimEnd = 0;
-let audioDuration = 0;
-let trimAudioPlaying = false;
-let trimPlayInterval = null;
-let isDraggingHandle = null;
-let dragStartX = 0;
-let dragStartVal = 0;
-let currentTab = 'image';
-
-// ── SCREEN TRANSITIONS ────────────────────────────────────────────────────────
-function showScreen(id) {
-    ['auth-screen','posts-screen','upload-screen'].forEach(s => {
-        const el = document.getElementById(s);
-        el.classList.remove('hidden-right','hidden-left');
-        if (s !== id) el.classList.add('hidden-right');
-    });
+// ── SCREENS ───────────────────────────────────────────────────────────────────
+function show(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.add('off'));
+    document.getElementById(id).classList.remove('off');
 }
 
-function showPosts() {
-    showScreen('posts-screen');
-}
-
-function showUpload() {
-    resetUploadForm();
-    showScreen('upload-screen');
-}
+function goUpload() { resetForm(); show('s-upload'); }
+function goPosts()  { show('s-posts'); }
 
 // ── AUTH ──────────────────────────────────────────────────────────────────────
 function doAuth() {
-    const val = document.getElementById('auth-key').value;
-    const err = document.getElementById('auth-err');
-    const ok = val.length === _P.length && [...val].every((c,i) => c.charCodeAt(0) === _P[i]);
+    const val = document.getElementById('pwd').value;
+    const ok  = val.length === _P.length && [...val].every((c,i) => c.charCodeAt(0) === _P[i]);
     if (ok) {
-        err.style.display = 'none';
-        showPosts();
+        show('s-posts');
         loadPosts();
     } else {
+        const err = document.getElementById('pwd-err');
         err.style.display = 'block';
-        document.getElementById('auth-key').value = '';
+        document.getElementById('pwd').value = '';
         setTimeout(() => err.style.display = 'none', 2000);
     }
 }
-document.getElementById('auth-key').addEventListener('keydown', e => { if(e.key==='Enter') doAuth(); });
+document.getElementById('pwd').addEventListener('keydown', e => { if (e.key === 'Enter') doAuth(); });
 
 // ── POSTS ─────────────────────────────────────────────────────────────────────
+let posts = [];
+
 function loadPosts() {
+    if (!db) return;
     db.ref('zaid/posts').on('value', snap => {
         posts = [];
-        const data = snap.val();
-        if (data) {
-            Object.entries(data)
+        const d = snap.val();
+        if (d) {
+            Object.entries(d)
                 .sort((a,b) => (b[1].timestamp||0)-(a[1].timestamp||0))
-                .forEach(([id,val]) => posts.push({id,...val}));
+                .forEach(([id,v]) => posts.push({id,...v}));
         }
-        renderAdminGrid();
+        renderGrid();
     });
 }
 
-function renderAdminGrid() {
-    const grid = document.getElementById('admin-grid');
-    const empty = document.getElementById('empty-msg');
-    document.getElementById('stat-count').textContent = posts.length;
-    if (posts.length === 0) {
-        grid.innerHTML = '<div class="empty-state" style="grid-column:span 2;">No posts yet<br><span style="font-size:18px;opacity:0.3;margin-top:10px;display:block;">✦</span></div>';
+function renderGrid() {
+    const g = document.getElementById('grid');
+    if (!posts.length) {
+        g.innerHTML = '<div style="grid-column:span 2;text-align:center;padding:50px 20px;color:rgba(255,255,255,0.12);font-size:10px;text-transform:uppercase;letter-spacing:2px;">No posts yet</div>';
         return;
     }
-    grid.innerHTML = '';
-    posts.forEach(post => {
-        const card = document.createElement('div');
-        card.className = 'post-card glass';
-        card.innerHTML = `
-            ${post.type==='video'
-                ? `<video src="${post.src}" muted playsinline style="width:100%;height:100%;object-fit:cover;opacity:0.85;"></video>`
-                : `<img src="${post.src}" loading="lazy">`}
-            <div class="overlay"></div>
-            ${post.audio ? '<div class="audio-badge"><i class="fas fa-music" style="margin-right:3px;font-size:7px;"></i>AUDIO</div>' : ''}
-            <button class="delete-btn" onclick="deletePost('${post.id}')"><i class="fas fa-trash"></i></button>
-            ${post.caption ? `<div style="position:absolute;bottom:0;left:0;right:0;padding:10px 10px 8px;background:linear-gradient(transparent,rgba(0,0,0,0.85));font-size:9px;color:rgba(255,255,255,0.7);line-height:1.3;">${post.caption}</div>` : ''}
+    g.innerHTML = '';
+    posts.forEach(p => {
+        const d = document.createElement('div');
+        d.className = 'post-card glass';
+        d.innerHTML = `
+            ${p.type==='video'
+                ? `<video src="${p.src}" muted playsinline style="width:100%;height:100%;object-fit:cover;opacity:0.85;"></video>`
+                : `<img src="${p.src}" loading="lazy" style="width:100%;height:100%;object-fit:cover;opacity:0.85;">`}
+            ${p.audio ? '<div class="audio-tag"><i class="fas fa-music" style="font-size:7px;margin-right:3px;"></i>AUDIO</div>' : ''}
+            <button class="del-btn" onclick="delPost('${p.id}')"><i class="fas fa-trash" style="font-size:9px;"></i></button>
+            ${p.caption ? `<div style="position:absolute;bottom:0;left:0;right:0;padding:8px;background:linear-gradient(transparent,rgba(0,0,0,0.85));font-size:9px;color:rgba(255,255,255,0.7);line-height:1.3;">${p.caption}</div>` : ''}
         `;
-        grid.appendChild(card);
+        g.appendChild(d);
     });
 }
 
-function deletePost(id) {
+function delPost(id) {
     if (!confirm('Delete this post?')) return;
-    db.ref('zaid/posts/'+id).remove();
+    if (db) db.ref('zaid/posts/'+id).remove();
 }
 
-// ── TAB ───────────────────────────────────────────────────────────────────────
-function setTab(tab) {
-    currentTab = tab;
-    document.getElementById('tab-image').classList.toggle('active', tab==='image');
-    document.getElementById('tab-video').classList.toggle('active', tab==='video');
-    document.getElementById('media-input').accept = tab==='image' ? 'image/*' : 'video/*';
+// ── TABS ──────────────────────────────────────────────────────────────────────
+let curTab = 'image';
+function setTab(t) {
+    curTab = t;
+    document.getElementById('t-img').classList.toggle('on', t==='image');
+    document.getElementById('t-vid').classList.toggle('on', t==='video');
+    document.getElementById('media-file').accept = t==='image' ? 'image/*' : 'video/*';
     clearMedia();
 }
 
-// ── MEDIA SELECT ──────────────────────────────────────────────────────────────
-function onMediaSelect(e) { if (e.target.files[0]) setMediaFile(e.target.files[0]); }
-function handleMediaDrop(e) {
+// ── MEDIA ─────────────────────────────────────────────────────────────────────
+let mediaFile = null;
+
+function onMediaPick(e) { if (e.target.files[0]) setMedia(e.target.files[0]); }
+function onMediaDrop(e) {
     e.preventDefault();
-    document.getElementById('media-zone').classList.remove('drag-over');
-    if (e.dataTransfer.files[0]) setMediaFile(e.dataTransfer.files[0]);
+    document.getElementById('media-drop').classList.remove('over');
+    if (e.dataTransfer.files[0]) setMedia(e.dataTransfer.files[0]);
 }
-function setMediaFile(file) {
-    selectedMediaFile = file;
-    const url = URL.createObjectURL(file);
-    document.getElementById('media-placeholder').style.display = 'none';
-    document.getElementById('media-preview').style.display = 'block';
-    const img = document.getElementById('prev-img');
-    const vid = document.getElementById('prev-vid');
-    if (file.type.startsWith('image/')) { img.src=url; img.style.display='block'; vid.style.display='none'; }
+function setMedia(f) {
+    mediaFile = f;
+    const url = URL.createObjectURL(f);
+    document.getElementById('media-ph').style.display = 'none';
+    document.getElementById('media-pv').style.display = 'block';
+    const img = document.getElementById('pv-img');
+    const vid = document.getElementById('pv-vid');
+    if (f.type.startsWith('image/')) { img.src=url; img.style.display='block'; vid.style.display='none'; }
     else { vid.src=url; vid.style.display='block'; img.style.display='none'; }
-    document.getElementById('prev-name').textContent = file.name;
+    document.getElementById('pv-name').textContent = f.name;
 }
 function clearMedia() {
-    selectedMediaFile = null;
-    document.getElementById('media-placeholder').style.display = 'block';
-    document.getElementById('media-preview').style.display = 'none';
-    document.getElementById('prev-img').src='';
-    document.getElementById('prev-vid').src='';
-    document.getElementById('prev-name').textContent='';
-    document.getElementById('media-input').value='';
+    mediaFile = null;
+    document.getElementById('media-ph').style.display = 'block';
+    document.getElementById('media-pv').style.display = 'none';
+    document.getElementById('pv-img').src = '';
+    document.getElementById('pv-vid').src = '';
+    document.getElementById('pv-name').textContent = '';
+    document.getElementById('media-file').value = '';
 }
 
-// ── AUDIO SELECT ──────────────────────────────────────────────────────────────
-function onAudioSelect(e) { if (e.target.files[0]) setAudioFile(e.target.files[0]); }
-function handleAudioDrop(e) {
+// ── AUDIO ─────────────────────────────────────────────────────────────────────
+let audioFile = null, audioBuffer = null, audioDur = 0, trimS = 0, trimE = 0;
+
+function onAudioPick(e) { if (e.target.files[0]) setAudio(e.target.files[0]); }
+function onAudioDrop(e) {
     e.preventDefault();
-    document.getElementById('audio-zone').classList.remove('drag-over');
-    if (e.dataTransfer.files[0]) setAudioFile(e.dataTransfer.files[0]);
+    document.getElementById('audio-drop').classList.remove('over');
+    if (e.dataTransfer.files[0]) setAudio(e.dataTransfer.files[0]);
 }
-
-function setAudioFile(file) {
-    selectedAudioFile = file;
-    document.getElementById('audio-placeholder').style.display = 'none';
-    document.getElementById('audio-selected-info').style.display = 'block';
-    document.getElementById('audio-filename').textContent = file.name;
-    document.getElementById('audio-duration').textContent = 'Loading...';
-
-    // Load into audio element for playback
-    const audioEl = document.getElementById('trim-audio');
-    const url = URL.createObjectURL(file);
-    audioEl.src = url;
-    audioEl.load();
-    audioEl.onloadedmetadata = () => {
-        audioDuration = audioEl.duration;
-        trimStart = 0;
-        trimEnd = audioDuration;
-        document.getElementById('audio-duration').textContent = formatTime(audioDuration);
-        document.getElementById('trimmer-section').style.display = 'block';
+function setAudio(f) {
+    audioFile = f;
+    document.getElementById('audio-ph').style.display = 'none';
+    document.getElementById('audio-info').style.display = 'block';
+    document.getElementById('audio-name').textContent = f.name;
+    document.getElementById('audio-dur').textContent = 'Loading...';
+    const el = document.getElementById('trim-audio');
+    el.src = URL.createObjectURL(f);
+    el.onloadedmetadata = () => {
+        audioDur = el.duration;
+        trimS = 0; trimE = audioDur;
+        document.getElementById('audio-dur').textContent = fmt(audioDur);
+        document.getElementById('trimmer').style.display = 'block';
         updateTrimUI();
-        drawWaveform(file);
+        drawWave(f);
     };
 }
-
 function clearAudio() {
-    selectedAudioFile = null;
-    stopTrimPlay();
-    document.getElementById('audio-placeholder').style.display = 'block';
-    document.getElementById('audio-selected-info').style.display = 'none';
-    document.getElementById('audio-input').value = '';
-    document.getElementById('trimmer-section').style.display = 'none';
-    const audioEl = document.getElementById('trim-audio');
-    audioEl.pause(); audioEl.src = '';
-    audioBuffer = null;
+    audioFile = null; audioBuffer = null;
+    stopPlay();
+    document.getElementById('audio-ph').style.display = 'block';
+    document.getElementById('audio-info').style.display = 'none';
+    document.getElementById('audio-file').value = '';
+    document.getElementById('trimmer').style.display = 'none';
+    const el = document.getElementById('trim-audio');
+    el.pause(); el.src = '';
 }
 
 // ── WAVEFORM ──────────────────────────────────────────────────────────────────
-async function drawWaveform(file) {
-    const canvas = document.getElementById('waveform-canvas');
-    const ctx = canvas.getContext('2d');
-    const wrap = document.getElementById('waveform-wrap');
-    canvas.width = wrap.offsetWidth * window.devicePixelRatio;
-    canvas.height = 64 * window.devicePixelRatio;
-    canvas.style.width = wrap.offsetWidth + 'px';
-    canvas.style.height = '64px';
-    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+async function drawWave(f) {
+    const box    = document.getElementById('waveform-box');
+    const canvas = document.getElementById('wv-canvas');
+    const ctx    = canvas.getContext('2d');
+    const W = box.offsetWidth, H = 80;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width  = W * dpr;
+    canvas.height = H * dpr;
+    canvas.style.width  = W + 'px';
+    canvas.style.height = H + 'px';
+    ctx.scale(dpr, dpr);
 
     try {
-        const arrayBuffer = await file.arrayBuffer();
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+        const ab  = await f.arrayBuffer();
+        const ac  = new (window.AudioContext || window.webkitAudioContext)();
+        audioBuffer = await ac.decodeAudioData(ab);
         const data = audioBuffer.getChannelData(0);
-        const W = wrap.offsetWidth, H = 64;
         const step = Math.ceil(data.length / W);
-        ctx.clearRect(0,0,W,H);
         for (let i=0; i<W; i++) {
-            let max=0;
-            for (let j=0; j<step; j++) { const v=Math.abs(data[i*step+j]||0); if(v>max)max=v; }
-            const barH = Math.max(2, max * H * 0.85);
-            const y = (H - barH) / 2;
-            const prog = i / W;
-            const inTrim = prog >= trimStart/audioDuration && prog <= trimEnd/audioDuration;
-            ctx.fillStyle = inTrim ? 'rgba(0,122,255,0.8)' : 'rgba(255,255,255,0.15)';
-            ctx.fillRect(i, y, 1, barH);
+            let mx=0;
+            for (let j=0; j<step; j++) { const v=Math.abs(data[i*step+j]||0); if(v>mx)mx=v; }
+            const bh = Math.max(2, mx * H * 0.85);
+            const inSel = i/W >= trimS/audioDur && i/W <= trimE/audioDur;
+            ctx.fillStyle = inSel ? 'rgba(0,122,255,0.9)' : 'rgba(255,255,255,0.12)';
+            ctx.fillRect(i, (H-bh)/2, 1, bh);
         }
-    } catch(e) {
-        // Fallback — draw placeholder bars
-        const W = wrap.offsetWidth, H = 64;
+    } catch {
+        // fallback bars
+        const H2 = 80;
         for (let i=0; i<W; i+=3) {
-            const h = 8 + Math.random()*30;
-            ctx.fillStyle = 'rgba(255,255,255,0.1)';
-            ctx.fillRect(i, (H-h)/2, 2, h);
+            const h = 6+Math.random()*28;
+            ctx.fillStyle = 'rgba(255,255,255,0.08)';
+            ctx.fillRect(i, (H2-h)/2, 2, h);
         }
     }
 }
 
-function redrawWaveformColors() {
+function recolor() {
     if (!audioBuffer) return;
-    const canvas = document.getElementById('waveform-canvas');
-    const ctx = canvas.getContext('2d');
-    const W = canvas.offsetWidth, H = 64;
+    const box    = document.getElementById('waveform-box');
+    const canvas = document.getElementById('wv-canvas');
+    const ctx    = canvas.getContext('2d');
+    const W = box.offsetWidth, H = 80;
+    const dpr = window.devicePixelRatio || 1;
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.save(); ctx.scale(dpr,dpr);
     const data = audioBuffer.getChannelData(0);
     const step = Math.ceil(data.length / W);
-    ctx.clearRect(0,0,W*window.devicePixelRatio,H*window.devicePixelRatio);
-    ctx.save(); ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
     for (let i=0; i<W; i++) {
-        let max=0;
-        for (let j=0; j<step; j++) { const v=Math.abs(data[i*step+j]||0); if(v>max)max=v; }
-        const barH = Math.max(2, max * H * 0.85);
-        const y = (H-barH)/2;
-        const prog = i/W;
-        const inTrim = audioDuration>0 && prog >= trimStart/audioDuration && prog <= trimEnd/audioDuration;
-        ctx.fillStyle = inTrim ? 'rgba(0,122,255,0.8)' : 'rgba(255,255,255,0.15)';
-        ctx.fillRect(i, y, 1, barH);
+        let mx=0;
+        for (let j=0; j<step; j++) { const v=Math.abs(data[i*step+j]||0); if(v>mx)mx=v; }
+        const bh = Math.max(2, mx*H*0.85);
+        const inSel = audioDur>0 && i/W >= trimS/audioDur && i/W <= trimE/audioDur;
+        ctx.fillStyle = inSel ? 'rgba(0,122,255,0.9)' : 'rgba(255,255,255,0.12)';
+        ctx.fillRect(i, (H-bh)/2, 1, bh);
     }
     ctx.restore();
 }
 
 // ── TRIM UI ───────────────────────────────────────────────────────────────────
 function updateTrimUI() {
-    if (!audioDuration) return;
-    const sel       = document.getElementById('trim-selection');
-    const leftDark  = document.getElementById('trim-left-dark');
-    const rightDark = document.getElementById('trim-right-dark');
-    const startPct  = (trimStart / audioDuration) * 100;
-    const endPct    = (trimEnd   / audioDuration) * 100;
-
-    // Selection box
-    sel.style.left  = startPct + '%';
-    sel.style.width = (endPct - startPct) + '%';
-
-    // Dark overlays outside selection
-    leftDark.style.width  = startPct + '%';
-    rightDark.style.width = (100 - endPct) + '%';
-
-    // Labels
-    document.getElementById('trim-start-label').textContent    = formatTime(trimStart);
-    document.getElementById('trim-end-label').textContent      = formatTime(trimEnd);
-    document.getElementById('trim-duration-label').textContent = formatTime(trimEnd - trimStart);
-
-    redrawWaveformColors();
+    if (!audioDur) return;
+    const sp = trimS/audioDur*100, ep = trimE/audioDur*100;
+    document.getElementById('wv-left').style.width  = sp+'%';
+    document.getElementById('wv-right').style.width = (100-ep)+'%';
+    document.getElementById('wv-sel').style.left  = sp+'%';
+    document.getElementById('wv-sel').style.width = (ep-sp)+'%';
+    document.getElementById('lbl-start').textContent = fmt(trimS);
+    document.getElementById('lbl-end').textContent   = fmt(trimE);
+    document.getElementById('lbl-dur').textContent   = fmt(trimE-trimS);
+    recolor();
 }
 
-function formatTime(s) {
-    const m = Math.floor(s/60);
-    const sec = Math.floor(s%60);
-    return m+':'+(sec<10?'0':'')+sec;
+function fmt(s) {
+    const m=Math.floor(s/60), sc=Math.floor(s%60);
+    return m+':'+(sc<10?'0':'')+sc;
 }
 
-// ── TRIM HANDLES — full mobile trimmer ───────────────────────────────────────
-// dragZone: 'start' | 'end' | 'middle' | null
-let dragZone = null;
-let dragStartX = 0;
-let dragStartTrimStart = 0;
-let dragStartTrimEnd = 0;
+// ── TRIM DRAG ─────────────────────────────────────────────────────────────────
+let drag=null, dragSX=0, dragTS=0, dragTE=0;
 
-function getTouchX(e) {
-    const rect = document.getElementById('waveform-wrap').getBoundingClientRect();
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    return Math.max(0, Math.min(clientX - rect.left, rect.width));
-}
+(function setupDrag(){
+    const box = document.getElementById('waveform-box');
 
-function xToTime(x) {
-    const W = document.getElementById('waveform-wrap').getBoundingClientRect().width;
-    return (x / W) * audioDuration;
-}
-
-function timeToX(t) {
-    const W = document.getElementById('waveform-wrap').getBoundingClientRect().width;
-    return (t / audioDuration) * W;
-}
-
-function setupTrimHandles() {
-    const wrap = document.getElementById('waveform-wrap');
+    function clientX(e) { return e.touches ? e.touches[0].clientX : e.clientX; }
+    function toTime(x) { return (x / box.getBoundingClientRect().width) * audioDur; }
+    function toX(t)    { return (t / audioDur) * box.getBoundingClientRect().width; }
 
     function onStart(e) {
-        if (!audioDuration) return;
+        if (!audioDur) return;
         e.preventDefault();
-        const x = getTouchX(e);
-        const W = wrap.getBoundingClientRect().width;
-        const startX = timeToX(trimStart);
-        const endX   = timeToX(trimEnd);
-        const EDGE   = 30; // px zone for edge grab
-
-        if (x <= startX + EDGE && x >= startX - EDGE) {
-            dragZone = 'start';
-        } else if (x >= endX - EDGE && x <= endX + EDGE) {
-            dragZone = 'end';
-        } else if (x > startX + EDGE && x < endX - EDGE) {
-            dragZone = 'middle';
-        } else {
-            dragZone = null; return;
-        }
-        dragStartX         = x;
-        dragStartTrimStart = trimStart;
-        dragStartTrimEnd   = trimEnd;
+        const rx   = clientX(e) - box.getBoundingClientRect().left;
+        const sX   = toX(trimS), eX = toX(trimE);
+        const EDGE = 32;
+        if      (Math.abs(rx-sX) <= EDGE) drag = 'S';
+        else if (Math.abs(rx-eX) <= EDGE) drag = 'E';
+        else if (rx > sX+EDGE && rx < eX-EDGE) drag = 'M';
+        else drag = null;
+        if (!drag) return;
+        dragSX = clientX(e);
+        dragTS = trimS; dragTE = trimE;
     }
 
     function onMove(e) {
-        if (!dragZone) return;
+        if (!drag) return;
         e.preventDefault();
-        const x    = getTouchX(e);
-        const dx   = x - dragStartX;
-        const dt   = xToTime(dx);
-        const dur  = dragStartTrimEnd - dragStartTrimStart;
-
-        if (dragZone === 'start') {
-            trimStart = Math.max(0, Math.min(dragStartTrimStart + dt, trimEnd - 0.3));
-        } else if (dragZone === 'end') {
-            trimEnd = Math.min(audioDuration, Math.max(dragStartTrimEnd + dt, trimStart + 0.3));
-        } else if (dragZone === 'middle') {
-            let ns = dragStartTrimStart + dt;
-            let ne = dragStartTrimEnd   + dt;
-            if (ns < 0) { ne -= ns; ns = 0; }
-            if (ne > audioDuration) { ns -= (ne - audioDuration); ne = audioDuration; }
-            trimStart = ns;
-            trimEnd   = ne;
+        const dx = clientX(e) - dragSX;
+        const dt = toTime(dx);
+        const len = dragTE - dragTS;
+        if (drag==='S') {
+            trimS = Math.max(0, Math.min(dragTS+dt, trimE-0.3));
+        } else if (drag==='E') {
+            trimE = Math.min(audioDur, Math.max(dragTE+dt, trimS+0.3));
+        } else {
+            let ns=dragTS+dt, ne=dragTE+dt;
+            if(ns<0){ne-=ns;ns=0;} if(ne>audioDur){ns-=ne-audioDur;ne=audioDur;}
+            trimS=ns; trimE=ne;
         }
         updateTrimUI();
     }
 
-    function onEnd() { dragZone = null; }
+    function onEnd() { drag=null; }
 
-    // Touch events on the wrap itself
-    wrap.addEventListener('touchstart', onStart, {passive:false});
-    wrap.addEventListener('touchmove',  onMove,  {passive:false});
-    wrap.addEventListener('touchend',   onEnd,   {passive:false});
-    wrap.addEventListener('touchcancel',onEnd,   {passive:false});
-
-    // Mouse events
-    wrap.addEventListener('mousedown',  onStart);
+    box.addEventListener('touchstart',  onStart, {passive:false});
+    box.addEventListener('touchmove',   onMove,  {passive:false});
+    box.addEventListener('touchend',    onEnd,   {passive:false});
+    box.addEventListener('touchcancel', onEnd,   {passive:false});
+    box.addEventListener('mousedown',   onStart);
     document.addEventListener('mousemove', onMove);
     document.addEventListener('mouseup',   onEnd);
-}
-setupTrimHandles();
+})();
 
 // ── PLAYBACK ──────────────────────────────────────────────────────────────────
-function toggleTrimPlay() {
-    const audioEl = document.getElementById('trim-audio');
-    if (trimAudioPlaying) {
-        stopTrimPlay();
-    } else {
-        audioEl.currentTime = trimStart;
-        audioEl.play();
-        trimAudioPlaying = true;
-        document.getElementById('play-trim-icon').className = 'fas fa-pause';
-        document.getElementById('play-trim-btn').classList.add('active');
-        trimPlayInterval = setInterval(() => {
-            const playhead = document.getElementById('playhead');
-            const wrap = document.getElementById('waveform-wrap');
-            const pct = (audioEl.currentTime / audioDuration) * wrap.offsetWidth;
-            playhead.style.left = pct + 'px';
-            if (audioEl.currentTime >= trimEnd) stopTrimPlay();
-        }, 50);
-    }
-}
+let playing=false, playTimer=null;
 
-function stopTrimPlay() {
-    const audioEl = document.getElementById('trim-audio');
-    audioEl.pause();
-    trimAudioPlaying = false;
-    document.getElementById('play-trim-icon').className = 'fas fa-play';
-    document.getElementById('play-trim-btn').classList.remove('active');
-    clearInterval(trimPlayInterval);
+function togglePlay() {
+    playing ? stopPlay() : startPlay(trimS);
 }
-
-function previewTrim() {
-    stopTrimPlay();
-    const audioEl = document.getElementById('trim-audio');
-    audioEl.currentTime = trimStart;
-    audioEl.play();
-    trimAudioPlaying = true;
-    document.getElementById('play-trim-icon').className = 'fas fa-pause';
-    document.getElementById('play-trim-btn').classList.add('active');
-    trimPlayInterval = setInterval(() => {
-        const playhead = document.getElementById('playhead');
-        const wrap = document.getElementById('waveform-wrap');
-        const pct = (audioEl.currentTime / audioDuration) * wrap.offsetWidth;
-        playhead.style.left = pct + 'px';
-        if (audioEl.currentTime >= trimEnd) stopTrimPlay();
-    }, 50);
+function previewTrim() { stopPlay(); startPlay(trimS); }
+function startPlay(from) {
+    const el=document.getElementById('trim-audio');
+    el.currentTime=from; el.play();
+    playing=true;
+    document.getElementById('play-icon').className='fas fa-pause';
+    playTimer=setInterval(()=>{
+        const box=document.getElementById('waveform-box');
+        const pct=(el.currentTime/audioDur)*box.offsetWidth;
+        document.getElementById('wv-head').style.left=pct+'px';
+        if(el.currentTime>=trimE) stopPlay();
+    },50);
 }
-
-// ── RESET ─────────────────────────────────────────────────────────────────────
-function resetUploadForm() {
-    clearMedia();
-    clearAudio();
-    document.getElementById('caption-input').value = '';
-    document.getElementById('pub-status').textContent = '';
-    document.getElementById('media-prog-wrap').style.display = 'none';
-    document.getElementById('media-prog-bar').style.width = '0%';
-    document.getElementById('audio-prog-wrap').style.display = 'none';
-    document.getElementById('audio-prog-bar').style.width = '0%';
-    const btn = document.getElementById('pub-btn');
-    btn.disabled = false;
-    btn.innerHTML = '<i class="fas fa-upload" style="margin-right:6px;"></i>PUBLISH POST';
-    setTab('image');
+function stopPlay() {
+    const el=document.getElementById('trim-audio');
+    el.pause(); playing=false;
+    document.getElementById('play-icon').className='fas fa-play';
+    clearInterval(playTimer);
 }
 
 // ── PUBLISH ───────────────────────────────────────────────────────────────────
-function setStatus(msg, color) {
-    const el = document.getElementById('pub-status');
-    el.textContent = msg; el.style.color = color;
-}
+function setStatus(m,c) { const e=document.getElementById('status'); e.textContent=m; e.style.color=c; }
 
-async function doPublish() {
-    if (!selectedMediaFile) { setStatus('SELECT A MEDIA FILE FIRST', 'var(--red)'); return; }
-    const caption = document.getElementById('caption-input').value.trim();
-    const btn = document.getElementById('pub-btn');
-    btn.disabled = true;
-    btn.innerHTML = '<div class="spinner" style="margin:0 auto;"></div>';
-
-    try {
-        // Step 1: Upload media to Cloudinary
-        setStatus('UPLOADING MEDIA...', 'rgba(255,255,255,0.35)');
-        document.getElementById('media-prog-wrap').style.display = 'block';
-        const mediaUrl = await uploadToCloudinary(
-            selectedMediaFile,
-            selectedMediaFile.type.startsWith('video/') ? 'video' : 'image',
-            (pct) => { document.getElementById('media-prog-bar').style.width = pct+'%'; setStatus('UPLOADING MEDIA... '+pct+'%','rgba(255,255,255,0.35)'); }
-        );
-
-        // Step 2: Upload trimmed audio if selected
-        let audioUrl = '';
-        if (selectedAudioFile) {
-            setStatus('UPLOADING AUDIO...', 'rgba(255,255,255,0.35)');
-            document.getElementById('audio-prog-wrap').style.display = 'block';
-
-            // If trimmed, render trimmed audio blob, else upload original
-            let audioBlob = selectedAudioFile;
-            if (Math.abs(trimStart) > 0.1 || Math.abs(trimEnd - audioDuration) > 0.1) {
-                audioBlob = await renderTrimmedAudio();
-                setStatus('RENDERING TRIM...', 'rgba(255,255,255,0.35)');
-            }
-            audioUrl = await uploadToCloudinary(
-                audioBlob,
-                'video', // Cloudinary uses 'video' resource type for audio
-                (pct) => { document.getElementById('audio-prog-bar').style.width = pct+'%'; setStatus('UPLOADING AUDIO... '+pct+'%','rgba(255,255,255,0.35)'); },
-                'audio'
-            );
-        }
-
-        // Step 3: Save to Firebase
-        const resourceType = selectedMediaFile.type.startsWith('video/') ? 'video' : 'image';
-        await db.ref('zaid/posts').push({
-            type: resourceType,
-            src: mediaUrl,
-            caption: caption || '',
-            audio: audioUrl,
-            timestamp: Date.now()
-        });
-
-        setStatus('✓ PUBLISHED SUCCESSFULLY', 'var(--accent)');
-        document.getElementById('media-prog-bar').style.width = '100%';
-        document.getElementById('audio-prog-bar').style.width = '100%';
-
-        setTimeout(() => {
-            showPosts();
-            resetUploadForm();
-        }, 1400);
-
-    } catch(err) {
-        setStatus('ERROR: ' + err.message, 'var(--red)');
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-upload" style="margin-right:6px;"></i>PUBLISH POST';
-    }
-}
-
-function uploadToCloudinary(file, resourceType, onProgress, folderSuffix='posts') {
-    return new Promise((resolve, reject) => {
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('upload_preset', CLOUDINARY_PRESET);
-        formData.append('folder', 'zaid/' + folderSuffix);
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/${resourceType}/upload`);
-        xhr.upload.onprogress = (e) => { if (e.lengthComputable) onProgress(Math.round(e.loaded/e.total*100)); };
-        xhr.onload = () => {
-            if (xhr.status === 200) resolve(JSON.parse(xhr.responseText).secure_url);
-            else reject(new Error('Cloudinary error: ' + xhr.status));
-        };
-        xhr.onerror = () => reject(new Error('Network error'));
-        xhr.send(formData);
+function upload(file, type, folder, onProg) {
+    return new Promise((res,rej)=>{
+        const fd=new FormData();
+        fd.append('file',file);
+        fd.append('upload_preset',PRESET);
+        fd.append('folder','zaid/'+folder);
+        const xhr=new XMLHttpRequest();
+        xhr.open('POST',`https://api.cloudinary.com/v1_1/${CLOUD}/${type}/upload`);
+        xhr.upload.onprogress=e=>{ if(e.lengthComputable) onProg(Math.round(e.loaded/e.total*100)); };
+        xhr.onload=()=>{ xhr.status===200?res(JSON.parse(xhr.responseText).secure_url):rej(new Error('Upload failed')); };
+        xhr.onerror=()=>rej(new Error('Network error'));
+        xhr.send(fd);
     });
 }
 
-async function renderTrimmedAudio() {
-    // Use Web Audio API to slice the buffer and export as WAV blob
-    const sampleRate = audioBuffer.sampleRate;
-    const startSample = Math.floor(trimStart * sampleRate);
-    const endSample   = Math.floor(trimEnd * sampleRate);
-    const length = endSample - startSample;
-    const offlineCtx = new OfflineAudioContext(audioBuffer.numberOfChannels, length, sampleRate);
-    const source = offlineCtx.createBufferSource();
-
-    // Slice buffer
-    const sliced = offlineCtx.createBuffer(audioBuffer.numberOfChannels, length, sampleRate);
-    for (let ch=0; ch<audioBuffer.numberOfChannels; ch++) {
-        sliced.copyToChannel(audioBuffer.getChannelData(ch).slice(startSample, endSample), ch);
+async function renderTrim() {
+    const sr=audioBuffer.sampleRate;
+    const s=Math.floor(trimS*sr), e=Math.floor(trimE*sr), len=e-s;
+    const oc=new OfflineAudioContext(audioBuffer.numberOfChannels,len,sr);
+    const buf=oc.createBuffer(audioBuffer.numberOfChannels,len,sr);
+    for(let c=0;c<audioBuffer.numberOfChannels;c++) buf.copyToChannel(audioBuffer.getChannelData(c).slice(s,e),c);
+    const src=oc.createBufferSource(); src.buffer=buf; src.connect(oc.destination); src.start();
+    const out=await oc.startRendering();
+    // encode as WAV
+    const nc=out.numberOfChannels, bl=out.length*nc*2+44;
+    const ab=new ArrayBuffer(bl); const v=new DataView(ab);
+    const ws=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i));};
+    ws(0,'RIFF');v.setUint32(4,bl-8,true);ws(8,'WAVE');ws(12,'fmt ');
+    v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,nc,true);
+    v.setUint32(24,sr,true);v.setUint32(28,sr*nc*2,true);v.setUint16(32,nc*2,true);
+    v.setUint16(34,16,true);ws(36,'data');v.setUint32(40,out.length*nc*2,true);
+    let off=44;
+    for(let i=0;i<out.length;i++) for(let c=0;c<nc;c++){
+        const s=Math.max(-1,Math.min(1,out.getChannelData(c)[i]));
+        v.setInt16(off,s<0?s*0x8000:s*0x7FFF,true);off+=2;
     }
-    source.buffer = sliced;
-    source.connect(offlineCtx.destination);
-    source.start();
-    const rendered = await offlineCtx.startRendering();
-    return audioBufferToWavBlob(rendered);
+    return new Blob([ab],{type:'audio/wav'});
 }
 
-function audioBufferToWavBlob(buffer) {
-    const numCh = buffer.numberOfChannels;
-    const length = buffer.length * numCh * 2 + 44;
-    const arrayBuf = new ArrayBuffer(length);
-    const view = new DataView(arrayBuf);
-    const sampleRate = buffer.sampleRate;
-    // WAV header
-    const writeStr = (o,s) => { for(let i=0;i<s.length;i++) view.setUint8(o+i,s.charCodeAt(i)); };
-    writeStr(0,'RIFF'); view.setUint32(4,length-8,true); writeStr(8,'WAVE');
-    writeStr(12,'fmt '); view.setUint32(16,16,true); view.setUint16(20,1,true);
-    view.setUint16(22,numCh,true); view.setUint32(24,sampleRate,true);
-    view.setUint32(28,sampleRate*numCh*2,true); view.setUint16(32,numCh*2,true);
-    view.setUint16(34,16,true); writeStr(36,'data');
-    view.setUint32(40,buffer.length*numCh*2,true);
-    let offset=44;
-    for (let i=0;i<buffer.length;i++) {
-        for (let ch=0;ch<numCh;ch++) {
-            const s = Math.max(-1,Math.min(1,buffer.getChannelData(ch)[i]));
-            view.setInt16(offset,s<0?s*0x8000:s*0x7FFF,true); offset+=2;
+async function doPublish() {
+    if (!mediaFile) { setStatus('SELECT A MEDIA FILE FIRST','var(--red)'); return; }
+    const btn=document.getElementById('pub-btn');
+    btn.disabled=true; btn.innerHTML='<div class="spin"></div>';
+
+    try {
+        // Upload media
+        setStatus('UPLOADING MEDIA...','rgba(255,255,255,0.3)');
+        document.getElementById('media-prog').style.display='block';
+        const mType = mediaFile.type.startsWith('video/') ? 'video' : 'image';
+        const mUrl = await upload(mediaFile, mType, 'posts', p=>{
+            document.getElementById('media-prog-fill').style.width=p+'%';
+            setStatus('UPLOADING MEDIA... '+p+'%','rgba(255,255,255,0.3)');
+        });
+
+        // Upload audio if selected
+        let aUrl='';
+        if (audioFile) {
+            setStatus('UPLOADING AUDIO...','rgba(255,255,255,0.3)');
+            document.getElementById('audio-prog').style.display='block';
+            const trimmed = (trimS>0.1 || trimE<audioDur-0.1) ? await renderTrim() : audioFile;
+            aUrl = await upload(trimmed,'video','audio', p=>{
+                document.getElementById('audio-prog-fill').style.width=p+'%';
+                setStatus('UPLOADING AUDIO... '+p+'%','rgba(255,255,255,0.3)');
+            });
         }
+
+        // Save to Firebase
+        if (db) await db.ref('zaid/posts').push({
+            type:mType, src:mUrl,
+            caption:document.getElementById('caption').value.trim(),
+            audio:aUrl, timestamp:Date.now()
+        });
+
+        setStatus('✓ PUBLISHED','var(--accent)');
+        setTimeout(()=>{ goPosts(); resetForm(); },1200);
+
+    } catch(err) {
+        setStatus('ERROR: '+err.message,'var(--red)');
+        btn.disabled=false;
+        btn.innerHTML='<i class="fas fa-upload" style="margin-right:6px;"></i>PUBLISH POST';
     }
-    return new Blob([arrayBuf],{type:'audio/wav'});
 }
+
+// ── RESET ─────────────────────────────────────────────────────────────────────
+function resetForm() {
+    clearMedia(); clearAudio();
+    document.getElementById('caption').value='';
+    document.getElementById('status').textContent='';
+    document.getElementById('media-prog').style.display='none';
+    document.getElementById('media-prog-fill').style.width='0%';
+    document.getElementById('audio-prog').style.display='none';
+    document.getElementById('audio-prog-fill').style.width='0%';
+    const btn=document.getElementById('pub-btn');
+    btn.disabled=false;
+    btn.innerHTML='<i class="fas fa-upload" style="margin-right:6px;"></i>PUBLISH POST';
+    setTab('image');
+}
+
 </script>
 </body>
 </html>
