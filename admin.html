@@ -281,16 +281,19 @@
 
 <script>
 // ── FIREBASE ─────────────────────────────────────────────────────────────────
-firebase.initializeApp({
-    apiKey:"AIzaSyAUk6bBCFPoq-Tu-AiX1nD3LFvhc6g7B7g",
-    authDomain:"steel-melody-464711-d6.firebaseapp.com",
-    projectId:"steel-melody-464711-d6",
-    storageBucket:"steel-melody-464711-d6.firebasestorage.app",
-    messagingSenderId:"288849938458",
-    appId:"1:288849938458:web:d615242bb9f1e1ee0fe9a3",
-    databaseURL:"https://steel-melody-464711-d6-default-rtdb.firebaseio.com"
-});
-const db = firebase.database();
+let db = null;
+try {
+    firebase.initializeApp({
+        apiKey:"AIzaSyAUk6bBCFPoq-Tu-AiX1nD3LFvhc6g7B7g",
+        authDomain:"steel-melody-464711-d6.firebaseapp.com",
+        projectId:"steel-melody-464711-d6",
+        storageBucket:"steel-melody-464711-d6.firebasestorage.app",
+        messagingSenderId:"288849938458",
+        appId:"1:288849938458:web:d615242bb9f1e1ee0fe9a3",
+        databaseURL:"https://steel-melody-464711-d6-default-rtdb.firebaseio.com"
+    });
+    db = firebase.database();
+} catch(e) { console.warn('Firebase init failed:', e); }
 
 const CLOUDINARY_CLOUD = "dptphdatf";
 const CLOUDINARY_PRESET = "vagprxhr";
